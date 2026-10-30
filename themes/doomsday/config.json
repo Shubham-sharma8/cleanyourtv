@@ -1,0 +1,40 @@
+{
+  "columns": 5,
+  "rows_below_dock": 1,
+  "fill_dock": true,
+  "dock_apps": [
+    "ar.tvplayer.tv",
+    "com.playfy.tv",
+    "com.amazon.firetv.youtube",
+    "com.netflix.ninja",
+    "in.startv.hotstar",
+    "com.sonyliv",
+    "com.amazon.firebat"
+  ],
+  "app_library": true,
+  "app_library_selection": true,
+  "library_button": true,
+  "show_library_pill": true,
+  "tile_menu": true,
+  "reorder_button": true,
+  "launcher_settings_button": true,
+  "icon_only_buttons": true,
+  "dock_glass": true,
+  "dock_band": false,
+  "app_glow": true,
+  "wallpaper": true,
+  "wallpaper_rotation_minutes": 30,
+  "wallpaper_order": "sequential",
+  "wallpaper_dim": 20,
+  "dock_opacity": 70,
+  "wallpaper_captions": true,
+  "app_keys": [
+    "191:com.amazon.firetv.youtube",
+    "hold:191:com.amazon.firebat",
+    "190:com.netflix.ninja",
+    "hold:190:com.playfy.tv",
+    "hold:284:in.startv.hotstar",
+    "192:com.sonyliv",
+    "hold:192:ar.tvplayer.tv"
+  ]
+}
