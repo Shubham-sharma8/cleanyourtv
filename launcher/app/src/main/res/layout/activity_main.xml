@@ -373,6 +373,13 @@
                     android:nextFocusDown="@+id/grid" />
 
                 <TextView
+                    android:id="@+id/btnMarvelTheme"
+                    style="@style/TopButton"
+                    android:text="Marvel / Theme"
+                    android:drawableStart="@drawable/ic_home_settings_pill"
+                    android:nextFocusDown="@+id/grid" />
+
+                <TextView
                     android:id="@+id/btnSettings"
                     style="@style/TopButton"
                     android:text="@string/settings"

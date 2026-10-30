@@ -225,6 +225,9 @@ public class HomeKeyService extends AccessibilityService {
         AccessibilityServiceInfo info = getServiceInfo();
         if (info != null && (!stockHome.isEmpty() || !powerOnLiveTv.isEmpty() || watchFront)) {
             info.eventTypes |= AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED;
+            if (config.keyFilter) {
+                info.flags |= AccessibilityServiceInfo.FLAG_REQUEST_FILTER_KEY_EVENTS;
+            }
             setServiceInfo(info);
         }
         if (!stockHome.isEmpty() || !powerOnLiveTv.isEmpty()) probeAtBoot();
@@ -321,6 +324,17 @@ public class HomeKeyService extends AccessibilityService {
         }
         // stock_home_redirect: the firmware turned the stock launcher back on and its home screen came up.
         CharSequence cls = event.getClassName();
+        CharSequence pkg = event.getPackageName();
+        if (pkg != null && "com.amazon.bueller.music".contentEquals(pkg)) {
+            Intent sonyLiv = getPackageManager().getLaunchIntentForPackage("com.onemainstream.sonyliv.android");
+            if (sonyLiv != null) {
+                try {
+                    startActivity(sonyLiv.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                    return;
+                } catch (ActivityNotFoundException | SecurityException ignored) {
+                }
+            }
+        }
         if (!stockHome.isEmpty() && cls != null && stockHome.contains(cls.toString())) openHome();
     }
 

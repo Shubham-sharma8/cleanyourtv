@@ -3,6 +3,7 @@ package com.gathin.tvhome;
 import android.animation.ArgbEvaluator;
 import android.animation.ValueAnimator;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
@@ -139,6 +140,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private AppAdapter adapter;
     private RecyclerView grid;
     private FrameLayout root;
+    private ReelHomeView reelHomeView;
     private WallpaperPlayer wallpaperPlayer;
     private GlassView glass;
     private View ambient;
@@ -798,6 +800,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             libraryFromTopBar = true;   // closing it goes back to this button, not to the pill after the last row
         });
         btnLibraryTop.setVisibility(cfg.libraryButton && cfg.appLibrary ? View.VISIBLE : View.GONE);
+        View btnMarvelTheme = findViewById(R.id.btnMarvelTheme);
+        if (btnMarvelTheme != null) {
+            btnMarvelTheme.setOnClickListener(v -> showThemeSwitcherDialog());
+        }
         addTopBarApps(cfg.topBarApps, cfg.launchActions);
         iconOnlyButtons = cfg.iconOnlyButtons;
         topMenu = cfg.topMenu;
@@ -868,9 +874,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         btnSettings.setOnKeyListener(pillKeys);
         btnReorder.setOnKeyListener(pillKeys);
         btnLibraryTop.setOnKeyListener(pillKeys);
+        if (btnMarvelTheme != null) btnMarvelTheme.setOnKeyListener(pillKeys);
         for (View button : topAppButtons) button.setOnKeyListener(pillKeys);
         if (advancedEffects) {
             List<View> pills = new ArrayList<>(Arrays.asList(btnInputs, btnWifi, btnVpn, btnReorder, btnLibraryTop, btnSettings));
+            if (btnMarvelTheme != null) pills.add(btnMarvelTheme);
             pills.addAll(topAppButtons);
             for (View button : pills) {
                 button.setOnFocusChangeListener((view, focused) -> view.animate()
@@ -909,8 +917,126 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                     .removeCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN)
                     .build(), vpnCallback);
         }
+
+        reelHomeView = new ReelHomeView(this, new ReelHomeView.HostCallbacks() {
+            @Override
+            public void onOpenAppLibrary() {
+                onLibraryRequested();
+            }
+
+            @Override
+            public void onOpenWifiSettings() {
+                openNetworkPill();
+            }
+
+            @Override
+            public void onOpenSystemSettings() {
+                open(systemIntent(Settings.ACTION_SETTINGS));
+            }
+
+            @Override
+            public void onOpenLauncherSettings() {
+                startActivityForResult(new Intent(MainActivity.this, LauncherSettingsActivity.class), LAUNCHER_SETTINGS_REQUEST);
+            }
+
+            @Override
+            public void onSwitchThemeRequested() {
+                showThemeSwitcherDialog();
+            }
+
+            @Override
+            public Bitmap getCurrentWallpaper() {
+                return wallpaperPlayer != null ? wallpaperPlayer.currentBitmap() : null;
+            }
+
+            @Override
+            public void onWallpaperChosen(String fileName) {
+                SharedPreferences sp = getSharedPreferences(Config.SETTINGS_NAME, MODE_PRIVATE);
+                sp.edit().putString(Config.WALLPAPER_CHOICE_KEY, fileName).apply();
+            }
+        });
+        root.addView(reelHomeView, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        reelHomeView.syncDockApps(adapter);
+        String savedThemeMode = getSharedPreferences(Config.SETTINGS_NAME, MODE_PRIVATE)
+                .getString("active_theme_mode", "marvel");
+        applyActiveThemeMode(savedThemeMode);
+
         // Not after recreate(): the launch intent survives it and would open the settings again.
         if (savedInstanceState == null && !openLauncherSettingsIfAsked(getIntent())) openInputsIfAsked(getIntent());
+    }
+
+    private void showThemeSwitcherDialog() {
+        String[] options = {
+            "Marvel: Avengers Doomsday 4K (Doctor Doom Reel Theme)",
+            "Original Install Theme (Classic Clean Grid & Dock)",
+            "Canva Cricket Arena Theme (Reel + Stadium Backdrop)",
+            "Canva F1 Paddock Club Theme (Reel + Night Track Backdrop)",
+            "Canva Music & YouTube Neon Theme (Reel + Studio Backdrop)",
+            "Choose Custom Wallpaper from wallpaper/ folder..."
+        };
+        new AlertDialog.Builder(this)
+                .setTitle("Change Launcher Theme")
+                .setItems(options, (dialog, which) -> {
+                    if (which == 0) {
+                        applyActiveThemeMode("marvel");
+                    } else if (which == 1) {
+                        applyActiveThemeMode("classic");
+                    } else if (which == 2) {
+                        applyActiveThemeMode("cricket");
+                    } else if (which == 3) {
+                        applyActiveThemeMode("f1");
+                    } else if (which == 4) {
+                        applyActiveThemeMode("music");
+                    } else if (reelHomeView != null) {
+                        reelHomeView.showInstantWallpaperPicker();
+                    }
+                })
+                .show();
+    }
+
+    private void applyActiveThemeMode(String mode) {
+        if (mode == null || mode.isEmpty()) mode = "marvel";
+        SharedPreferences sp = getSharedPreferences(Config.SETTINGS_NAME, MODE_PRIVATE);
+        sp.edit().putString("active_theme_mode", mode).apply();
+
+        View topButtons = findViewById(R.id.topButtons);
+        if ("classic".equals(mode)) {
+            if (reelHomeView != null) {
+                reelHomeView.setVisibility(View.GONE);
+                reelHomeView.setFocusable(false);
+            }
+            grid.setVisibility(View.VISIBLE);
+            grid.setFocusable(true);
+            grid.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
+            if (topButtons != null) topButtons.setVisibility(View.VISIBLE);
+            hero.setVisibility(View.VISIBLE);
+            glass.setVisibility(View.VISIBLE);
+            updateClockVisibility();
+            updateInputsButton();
+            grid.post(() -> focusTile(0));
+            Toast.makeText(this, "Switched to Original Install Theme (Click 'Marvel / Theme' top right to return)", Toast.LENGTH_LONG).show();
+        } else {
+            String wpFile = "00_doctor_doom.jpg";
+            if ("cricket".equals(mode)) wpFile = "02_canva_cricket_arena.jpg";
+            else if ("f1".equals(mode)) wpFile = "03_canva_f1_paddock.jpg";
+            else if ("music".equals(mode)) wpFile = "04_canva_music_youtube.jpg";
+
+            grid.setVisibility(View.INVISIBLE);
+            grid.setFocusable(false);
+            grid.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
+            clockBlock.setVisibility(View.GONE);
+            if (topButtons != null) topButtons.setVisibility(View.GONE);
+            hero.setVisibility(View.GONE);
+            glass.setVisibility(View.GONE);
+            if (reelHomeView != null) {
+                reelHomeView.setVisibility(View.VISIBLE);
+                reelHomeView.setFocusable(true);
+                reelHomeView.applyThemeWallpaper(wpFile);
+                reelHomeView.syncDockApps(adapter);
+                reelHomeView.requestFocus();
+            }
+        }
     }
 
     /**
@@ -982,6 +1108,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (openInputsIfAsked(intent)) return;
         if (intent == null || !intent.hasCategory(Intent.CATEGORY_HOME)) return;
         if (gameDay != null && !stopped) gameDay.read();
+        if (reelHomeView != null && reelHomeView.getVisibility() == View.VISIBLE) {
+            reelHomeView.scrollToSection(0);
+            reelHomeView.requestFocus();
+            return;
+        }
         grid.scrollToPosition(0);
         lastFocused = 0;
         lastFocusedKey = adapter.getItemCount() > 0 ? adapter.keyAt(0) : null;
@@ -1189,6 +1320,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         lastFocusedKey = returnKey;
         lastFocused = returnSlot;
         packageSequence = currentPackageSequence(packageSequence);
+        if (reelHomeView != null) reelHomeView.syncDockApps(adapter);
     }
 
     /**
@@ -1196,6 +1328,12 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
      * reload() the view that holds focus may no longer show the app it had.
      */
     private void restoreFocus() {
+        if (reelHomeView != null && reelHomeView.getVisibility() == View.VISIBLE) {
+            reelHomeView.syncDockApps(adapter);
+            reelHomeView.requestFocus();
+            tilesReady = true;
+            return;
+        }
         final boolean returnToLibrary = libraryFocusPending;
         final String returnKey = lastFocusedKey;
         final int returnSlot = lastFocused;
@@ -1693,7 +1831,15 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             }
             libraryFocusPending = true;
             grid.post(() -> {
-                if (libraryFocusPending && appLibrary == null && hasWindowFocus() && !isFinishing()) focusLibrary();
+                if (libraryFocusPending && appLibrary == null && hasWindowFocus() && !isFinishing()) {
+                    if (reelHomeView != null) {
+                        libraryFocusPending = false;
+                        reelHomeView.syncDockApps(adapter);
+                        reelHomeView.requestFocus();
+                    } else {
+                        focusLibrary();
+                    }
+                }
             });
         }, libraryExcludedApps);
         openPopup = appLibrary.popup;
@@ -2561,6 +2707,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private final Runnable clockCheck = this::updateClockVisibility;
 
     private void updateClockVisibility() {
+        if (reelHomeView != null && reelHomeView.getVisibility() == View.VISIBLE) {
+            clockBlock.setVisibility(View.GONE);
+            return;
+        }
         boolean valid = System.currentTimeMillis() >= TIME_VALID_AFTER_MS;
         clockBlock.setVisibility(valid ? View.VISIBLE : View.INVISIBLE);
         handler.removeCallbacks(clockCheck);
@@ -3491,6 +3641,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         PopupWindow popup = glassPopup(panel, (int) (220 * density));
         // Inputs opens its own list once this one has closed.
         if (showInputsMenuRow) addInputRow(rows, popup, R.drawable.ic_input, getString(R.string.inputs), -1, () -> root.post(this::showInputs));
+        addInputRow(rows, popup, R.drawable.ic_home_settings_pill, "Marvel / Change Theme", -1, this::showThemeSwitcherDialog);
         addInputRow(rows, popup, R.drawable.ic_wifi, getString(R.string.quick_network), -1, this::openNetworkPill);
         CharSequence network = wifiIconOnly ? btnWifi.getContentDescription() : btnWifi.getText();
         if (!TextUtils.isEmpty(network)) {
@@ -3518,6 +3669,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         View panel = getLayoutInflater().inflate(R.layout.popup_inputs, root, false);
         LinearLayout rows = panel.findViewById(R.id.rows);
         PopupWindow popup = glassPopup(panel, (int) (200 * density));
+        addInputRow(rows, popup, R.drawable.ic_home_settings_pill, "Marvel / Change Theme", -1, this::showThemeSwitcherDialog);
         if (!launcherSettingsButton) addSettingsMenuRow(rows, popup, R.string.launcher_settings, () -> startActivityForResult(
                 new Intent(this, LauncherSettingsActivity.class), LAUNCHER_SETTINGS_REQUEST));
         // Firmware that ships its own settings app next to the AOSP one (Xiaomi China is one): the

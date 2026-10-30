@@ -137,6 +137,10 @@ final class WallpaperPlayer {
         active = false;
     }
 
+    Bitmap currentBitmap() {
+        return current;
+    }
+
     /** Drops the wallpaper texture when Home is hidden and Android asks the process to free memory. */
     void releaseForMemoryPressure() {
         if (current == null) return;

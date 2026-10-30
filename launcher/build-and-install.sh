@@ -33,7 +33,11 @@ if [ "${SKIP_BUILD:-}" != 1 ]; then
 # A JRE (Temurin ships one) answers as a 17 but has no jlink, which the Android Gradle plugin needs,
 # so skip it too and fall through to Homebrew (#1255).
 if [ -z "${JAVA_HOME:-}" ]; then
-  JH="$(/usr/libexec/java_home -v 17 2>/dev/null || true)"
+  if [ -d "../work/sdk/jdk-17/Contents/Home" ]; then
+    JH="$(cd ../work/sdk/jdk-17/Contents/Home && pwd)"
+  else
+    JH="$(/usr/libexec/java_home -v 17 2>/dev/null || true)"
+  fi
   if [ -n "$JH" ]; then
     case "$("$JH/bin/java" -version 2>&1 || true)" in *'version "17.'*) ;; *) JH="" ;; esac
   fi
@@ -44,8 +48,12 @@ if [ -z "${JAVA_HOME:-}" ]; then
 fi
 export JAVA_HOME
 # Android Studio's default SDK location on macOS, then on Linux, then Homebrew's command-line tools.
+if [ -z "${ANDROID_HOME:-}" ] && [ -d "../work/sdk/android" ]; then
+  ANDROID_HOME="$(cd ../work/sdk/android && pwd)"
+fi
 export ANDROID_HOME="${ANDROID_HOME:-$(for d in ~/Library/Android/sdk ~/Android/Sdk; do [ -d "$d" ] && echo "$d" && break; done)}"
 export ANDROID_HOME="${ANDROID_HOME:-/opt/homebrew/share/android-commandlinetools}"
+export GRADLE_USER_HOME="${GRADLE_USER_HOME:-$(cd .. && pwd)/work/gradle-home}"
 export PATH="$JAVA_HOME/bin:$PATH"
 # local.properties is a Java properties file, where a backslash is an escape. Git Bash on Windows hands us
 # C:\Users\...\Sdk, which Gradle then reads as a broken path ("The filename, directory name, or volume label
@@ -194,17 +202,21 @@ HOME_NOW=$(query_home)
 case "$HOME_NOW" in
   com.gathin.tvhome/*) echo "Home now resolves to $HOME_NOW" ;;
   *)
-    if [ -z "$HOME_NOW" ]; then
-      echo "ERROR: the TV stopped answering while Home was being switched, so the outcome is unknown." >&2
+    if [ "$STOCK_LAUNCHER" = none ] && [ -n "$HOME_NOW" ]; then
+      echo "Home resolves to $HOME_NOW (STOCK_LAUNCHER=none kept stock launcher enabled; HomeKeyService will redirect to CleanYourTV)."
     else
-      echo "ERROR: Home resolves to $HOME_NOW, not to the new launcher." >&2
-    fi
-    rollback_home || true
-    if [ -n "$HOME_NOW" ]; then
-      echo "On Google TV this usually means com.google.android.tungsten.setupwraith also claims Home: add it to" >&2
-      echo "your debloat list (see README, Troubleshooting), apply the list, then run this script again." >&2
-    fi
-    exit 1 ;;
+      if [ -z "$HOME_NOW" ]; then
+        echo "ERROR: the TV stopped answering while Home was being switched, so the outcome is unknown." >&2
+      else
+        echo "ERROR: Home resolves to $HOME_NOW, not to the new launcher." >&2
+      fi
+      rollback_home || true
+      if [ -n "$HOME_NOW" ]; then
+        echo "On Google TV this usually means com.google.android.tungsten.setupwraith also claims Home: add it to" >&2
+        echo "your debloat list (see README, Troubleshooting), apply the list, then run this script again." >&2
+      fi
+      exit 1
+    fi ;;
 esac
 
 # Optional accessibility services. Off unless asked for, and Android switches them off again on

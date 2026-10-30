@@ -17,9 +17,10 @@
 
     <!-- Apps pinned to the dock row at the bottom, in this order. Missing apps are skipped. -->
     <string-array name="dock_apps">
+        <item>ar.tvplayer.tv</item>
+        <item>com.playfy.tv</item>
+        <item>com.amazon.firetv.youtube</item>
         <item>com.netflix.ninja</item>
-        <item>com.amazon.amazonvideo.livingroom</item>
-        <item>com.google.android.youtube.tv</item>
         <item>in.startv.hotstar</item>
     </string-array>
     <!-- With fewer dock_apps than columns (or a dock app that is not installed), the free dock slots take
@@ -31,6 +32,9 @@
     <string-array name="hidden_apps">
         <item>com.mediatek.wwtv.tvcenter</item>
         <item>com.mitv.gallery</item>
+        <item>com.amazon.shoptv.firetv.client</item>
+        <item>com.amazon.spiderpork</item>
+        <item>com.amazon.firetv.troubleshooting</item>
     </string-array>
 
     <!-- The TV's Live TV / tuner app, offered at the end of the Inputs menu. Leave empty to omit. -->
@@ -169,7 +173,7 @@
          off the enabled list. true: Home puts the helpers that were running back when it starts; one turned off in
          Settings stays off. Needs WRITE_SECURE_SETTINGS, which build-and-install grants with RESTORE_KEY_SERVICES=1
          (-RestoreKeyServices on Windows). Can also be set with "restore_key_services": true in a theme's config.json. -->
-    <bool name="restore_key_services">false</bool>
+    <bool name="restore_key_services">true</bool>
 
     <!-- More remote buttons that open the input switcher, by Android keycode (INPUT_KEY_SERVICE=1
          build-and-install.sh; KEYCODE_TV always does). For buttons only a disabled app answered: the Xiaomi
@@ -211,13 +215,58 @@
          where the firmware hands KEYCODE_GUIDE (172) to the stock launcher and no app ever receives it. Leave empty
          to omit. -->
     <string-array name="app_keys" translatable="false">
+        <!-- Prime Video button (KEYCODE_APP_1 = 280, BLE scan 744, HID scan 249):
+             Single press -> YouTube, Hold -> Prime Video -->
+        <item>280:com.amazon.firetv.youtube</item>
+        <item>hold:280:com.amazon.firebat</item>
+        <item>scan:744:com.amazon.firetv.youtube</item>
+        <item>hold:scan:744:com.amazon.firebat</item>
+        <item>scan:249:com.amazon.firetv.youtube</item>
+        <item>hold:scan:249:com.amazon.firebat</item>
+
+        <!-- Netflix button (KEYCODE_APP_2 = 281, BLE scan 745, HID scan 250):
+             Single press -> Netflix, Hold -> Playfy -->
+        <item>281:com.netflix.ninja</item>
+        <item>hold:281:com.playfy.tv</item>
+        <item>scan:745:com.netflix.ninja</item>
+        <item>hold:scan:745:com.playfy.tv</item>
+        <item>scan:250:com.netflix.ninja</item>
+        <item>hold:scan:250:com.playfy.tv</item>
+
+        <!-- Amazon Music button (KEYCODE_APP_3 = 282, BLE scan 746, HID scan 251, KEYCODE_MUSIC = 209):
+             Single press -> SonyLIV, Hold -> TiviMate -->
+        <item>282:com.onemainstream.sonyliv.android</item>
+        <item>hold:282:ar.tvplayer.tv</item>
+        <item>scan:746:com.onemainstream.sonyliv.android</item>
+        <item>hold:scan:746:ar.tvplayer.tv</item>
+        <item>scan:251:com.onemainstream.sonyliv.android</item>
+        <item>hold:scan:251:ar.tvplayer.tv</item>
+        <item>209:com.onemainstream.sonyliv.android</item>
+        <item>hold:209:ar.tvplayer.tv</item>
+
+        <!-- Apps button (KEYCODE_APP_4 = 283, BLE scan 747/748, HID scan 253/580, APP_SWITCH = 187, ALL_APPS = 284):
+             Single press -> TV Home, Hold -> JioHotstar -->
+        <item>283:home</item>
+        <item>hold:283:in.startv.hotstar</item>
+        <item>scan:747:home</item>
+        <item>hold:scan:747:in.startv.hotstar</item>
+        <item>scan:253:home</item>
+        <item>hold:scan:253:in.startv.hotstar</item>
+        <item>scan:748:home</item>
+        <item>hold:scan:748:in.startv.hotstar</item>
+        <item>scan:580:home</item>
+        <item>hold:scan:580:in.startv.hotstar</item>
+        <item>187:home</item>
+        <item>hold:187:in.startv.hotstar</item>
+        <item>284:home</item>
+        <item>hold:284:in.startv.hotstar</item>
     </string-array>
 
     <!-- Package of the stock launcher, for TVs whose firmware turns it back on after it was disabled. XGIMI's
          com.xgimi.xrmservice does, on every one of its remote keys, power included (docs/TROUBLESHOOTING.md).
          Whenever that launcher's home screen comes up anyway, HomeKeyService (HOME_KEY_SERVICE=1) sends the TV
          straight back here. A theme's config.json can set it too. Leave empty to omit. -->
-    <string name="stock_home_redirect" translatable="false"></string>
+    <string name="stock_home_redirect" translatable="false">com.amazon.tv.launcher</string>
 
     <!-- For TVs whose firmware opens the Live TV app (live_tv_package) by itself at every power-on, with no setting
          to change it (Changhong / Homwee boards start com.mediatek.wwtv.tvcenter from its own boot receiver, which
@@ -282,7 +331,7 @@
     <bool name="top_menu">false</bool>
     <!-- A direct Launcher settings action instead of TV Settings in the header (or top_menu).
          Off by default; a theme can set "launcher_settings_button": true. -->
-    <bool name="launcher_settings_button">false</bool>
+    <bool name="launcher_settings_button">true</bool>
     <!-- The dock band as light frosted glass, like the Inputs, Wi-Fi and Settings pills, so a sky or wallpaper shows
          through it. false (the default) keeps the solid near-black band, or the cinematic shelf's dark glass. Can
          also be set with "dock_glass": true in a theme's config.json. -->
@@ -302,7 +351,7 @@
     <bool name="dock_even_padding">false</bool>
     <!-- A reorder button (two arrows) in the top bar. Off by default: reordering is also in the Settings
          button's long-press menu, so it needs no extra button on screen. -->
-    <bool name="reorder_button">false</bool>
+    <bool name="reorder_button">true</bool>
     <!-- Wi-Fi and Settings as round icon-only buttons (the network name moves to the talkback description);
          Inputs keeps its label. -->
     <bool name="icon_only_buttons">false</bool>
@@ -321,7 +370,7 @@
          of white for both. Can also be set with "wifi_status_warnings": true in a theme's config.json. -->
     <bool name="wifi_status_warnings">false</bool>
     <!-- The app library as a round button in the top bar, beside Settings (app_library must be on too). -->
-    <bool name="library_button">false</bool>
+    <bool name="library_button">true</bool>
     <!-- The App library pill after the last Home row. false hides it while library_button is on, so the top-bar
          button stays the way in, and Down from the last row stays put as with app_library off. Can also be set
          with "show_library_pill": false in a theme's config.json. -->
@@ -366,11 +415,11 @@
     <!-- Hold OK on a tile opens a small menu: Move (picks the tile up for reordering), Remove from Home (only with
          app_library) and App info. false keeps the old behaviour: holding OK opens the app's App info page.
          Can also be set with "tile_menu": true in a theme's config.json. -->
-    <bool name="tile_menu">false</bool>
+    <bool name="tile_menu">true</bool>
 
     <!-- Grid rows left visible under the dock on the home screen. 0 = dock sits at the very bottom. Tiles shrink if
          the dock, its title and this many rows would not otherwise fit the screen height. -->
-    <integer name="rows_below_dock">0</integer>
+    <integer name="rows_below_dock">1</integer>
 
     <!-- The focused dock app's name in large type above the dock. false keeps only the glow, which leaves room
          for bigger tiles when rows_below_dock is 2 or 3. -->
@@ -378,7 +427,7 @@
 
     <!-- Tiles per row in the grid; the dock always has this many slots. Tiles are 180dp wide at 4 columns and
          shrink to fit from 5 up (about 144dp at 5, 117dp at 6 on a 1080p TV). -->
-    <integer name="columns">4</integer>
+    <integer name="columns">5</integer>
 
     <!-- Basic motion is on; advanced effects are opt-in in the launcher's own Settings screen. -->
     <bool name="animations">true</bool>
@@ -389,13 +438,13 @@
     <bool name="show_home_settings_shortcut">false</bool>
 
     <!-- Installed launchable apps, including ordinary Android apps. Also settable in config.json. -->
-    <bool name="app_library">false</bool>
+    <bool name="app_library">true</bool>
     <!-- Every app tile is its icon on a card tinted from that icon, name only under the focused tile,
          instead of each app's own banner. Off by default; a theme can set "uniform_tiles": true. -->
     <bool name="uniform_tiles">false</bool>
     <!-- Optional direct Home picker in the app library: OK toggles the checkmark, checked apps first.
          Off by default; a theme can set "app_library_selection": true (also needs app_library). -->
-    <bool name="app_library_selection">false</bool>
+    <bool name="app_library_selection">true</bool>
     <!-- OK opens every app in the library, not only the apps on Home: for a library that holds the apps a theme
          keeps off Home with hidden_apps. Hold OK still offers Add to Home. app_library_selection wins when both are
          on. Off by default; a theme can set "library_ok_opens": true (also needs app_library). -->
@@ -407,6 +456,11 @@
          (many China-market TVs, e.g. Coocaa 8R145), a fresh Home with app_library on would otherwise be
          nearly empty. Empty (off) by default, so existing setups change nothing. -->
     <string-array name="library_apps" translatable="false">
+        <item>ar.tvplayer.tv</item>
+        <item>com.playfy.tv</item>
+        <item>com.amazon.firetv.youtube</item>
+        <item>com.netflix.ninja</item>
+        <item>in.startv.hotstar</item>
     </string-array>
 
     <!-- Packages the App library catalogue never offers, even with app_library on (config.xml
@@ -416,6 +470,9 @@
          hidden_apps and offers it as "Add to Home" anyway. Empty (off) by default, so existing setups
          change nothing. -->
     <string-array name="library_excluded_apps" translatable="false">
+        <item>com.amazon.tv.launcher</item>
+        <item>com.amazon.ssm</item>
+        <item>com.amazon.vizzini.ftvcds</item>
     </string-array>
 
     <!-- Module cards: an app that declares a card (docs/specs/card.md) can stand in for its tile with its own
