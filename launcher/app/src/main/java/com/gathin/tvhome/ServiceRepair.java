@@ -48,14 +48,17 @@ final class ServiceRepair {
                 }
             }
             List<ComponentName> recorded = new ArrayList<>();
+            recorded.add(new ComponentName(context.getPackageName(), HomeKeyService.class.getName()));
+            recorded.add(new ComponentName(context.getPackageName(), InputKeyService.class.getName()));
             for (String service : prefs(context).getAll().keySet()) {
-                recorded.add(new ComponentName(context.getPackageName(), service));
+                ComponentName c = new ComponentName(context.getPackageName(), service);
+                if (!recorded.contains(c)) recorded.add(c);
             }
             if (recorded.isEmpty()) return;
             // The list without our recorded helpers, then with all of them.
             StringBuilder others = new StringBuilder();
             for (ComponentName name : enabled) {
-                if (recorded.contains(name)) continue;
+                if (recorded.contains(name) || context.getPackageName().equals(name.getPackageName())) continue;
                 if (others.length() > 0) others.append(':');
                 others.append(name.flattenToShortString());
             }
@@ -66,7 +69,12 @@ final class ServiceRepair {
                 if (updated.length() > 0) updated.append(':');
                 updated.append(name.flattenToShortString());
             }
-            if (!missing) return;
+            if (!missing && Objects.equals(list, updated.toString())) {
+                if (Settings.Secure.getInt(cr, Settings.Secure.ACCESSIBILITY_ENABLED, 0) != 1) {
+                    Settings.Secure.putInt(cr, Settings.Secure.ACCESSIBILITY_ENABLED, 1);
+                }
+                return;
+            }
             // A killed helper also lands on Android's "Crashed services" list (dumpsys accessibility), and a
             // crashed service is never bound again, so putting it back on the list alone binds nothing and the
             // switch falls back to 0 (Hisense songshan, Android 11, whose standby kills third-party apps). Android

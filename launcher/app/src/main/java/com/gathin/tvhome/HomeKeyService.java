@@ -335,7 +335,10 @@ public class HomeKeyService extends AccessibilityService {
                 }
             }
         }
-        if (!stockHome.isEmpty() && cls != null && stockHome.contains(cls.toString())) openHome();
+        if ((!stockHomePackage.isEmpty() && pkg != null && stockHomePackage.contentEquals(pkg))
+                || (!stockHome.isEmpty() && cls != null && stockHome.contains(cls.toString()))) {
+            openHome();
+        }
     }
 
     /** How long power_on_home stays armed after the screen turns on without a reboot. */

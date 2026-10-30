@@ -802,7 +802,7 @@ public final class ReelHomeView extends View {
             float s = 9.5f * density;
 
             if (i == 0) {
-                // Theme Switcher Diamond / Sparkle Palette icon
+                // Theme Switcher Diamond / Sparkle Palette icon + visible "Themes" label
                 path.reset();
                 path.moveTo(cx, cy - s * 0.95f);
                 path.lineTo(cx + s * 0.95f, cy);
@@ -812,6 +812,14 @@ public final class ReelHomeView extends View {
                 canvas.drawPath(path, strokePaint);
                 paint.setColor(iconColor);
                 canvas.drawCircle(cx, cy, 2.5f * density, paint);
+                if (!focused) {
+                    textPaint.setTypeface(outfitBold);
+                    textPaint.setTextSize(10.5f * density);
+                    textPaint.setColor(0xBBFFFFFF);
+                    String lbl = "Themes";
+                    float lw = textPaint.measureText(lbl);
+                    canvas.drawText(lbl, cx - lw * 0.5f, cy + r * 1.95f, textPaint);
+                }
             } else if (i == 1) {
                 // Wi-Fi arcs + dot
                 rect.set(cx - s, cy - s * 0.7f, cx + s, cy + s * 1.3f);

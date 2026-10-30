@@ -959,7 +959,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         reelHomeView.syncDockApps(adapter);
         String savedThemeMode = getSharedPreferences(Config.SETTINGS_NAME, MODE_PRIVATE)
-                .getString("active_theme_mode", "marvel");
+                .getString("active_theme_mode", "classic");
         applyActiveThemeMode(savedThemeMode);
 
         // Not after recreate(): the launch intent survives it and would open the settings again.
@@ -968,26 +968,35 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     private void showThemeSwitcherDialog() {
         String[] options = {
-            "Marvel: Avengers Doomsday 4K (Doctor Doom Reel Theme)",
-            "Original Install Theme (Classic Clean Grid & Dock)",
-            "Canva Cricket Arena Theme (Reel + Stadium Backdrop)",
-            "Canva F1 Paddock Club Theme (Reel + Night Track Backdrop)",
-            "Canva Music & YouTube Neon Theme (Reel + Studio Backdrop)",
+            "Main Default Theme (Classic Clean Grid + Doctor Doom 4K) [Default]",
+            "Marvel: Avengers Doomsday 4K (Interactive Reel + Chess + Moods)",
+            "Canva Cricket Arena 4K (Interactive Reel + Stadium Backdrop)",
+            "Canva F1 Paddock Club 4K (Interactive Reel + Night Track)",
+            "Canva Music & YouTube Neon 4K (Interactive Reel + Studio)",
+            "Main Default Grid + Canva Cricket Arena 4K Wallpaper",
+            "Main Default Grid + Canva F1 Paddock Club 4K Wallpaper",
+            "Main Default Grid + Canva Music & YouTube Neon 4K Wallpaper",
             "Choose Custom Wallpaper from wallpaper/ folder..."
         };
         new AlertDialog.Builder(this)
                 .setTitle("Change Launcher Theme")
                 .setItems(options, (dialog, which) -> {
                     if (which == 0) {
-                        applyActiveThemeMode("marvel");
-                    } else if (which == 1) {
                         applyActiveThemeMode("classic");
+                    } else if (which == 1) {
+                        applyActiveThemeMode("marvel");
                     } else if (which == 2) {
                         applyActiveThemeMode("cricket");
                     } else if (which == 3) {
                         applyActiveThemeMode("f1");
                     } else if (which == 4) {
                         applyActiveThemeMode("music");
+                    } else if (which == 5) {
+                        applyActiveThemeMode("classic_cricket");
+                    } else if (which == 6) {
+                        applyActiveThemeMode("classic_f1");
+                    } else if (which == 7) {
+                        applyActiveThemeMode("classic_music");
                     } else if (reelHomeView != null) {
                         reelHomeView.showInstantWallpaperPicker();
                     }
@@ -996,12 +1005,21 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     }
 
     private void applyActiveThemeMode(String mode) {
-        if (mode == null || mode.isEmpty()) mode = "marvel";
+        if (mode == null || mode.isEmpty()) mode = "classic";
         SharedPreferences sp = getSharedPreferences(Config.SETTINGS_NAME, MODE_PRIVATE);
         sp.edit().putString("active_theme_mode", mode).apply();
 
         View topButtons = findViewById(R.id.topButtons);
-        if ("classic".equals(mode)) {
+        if (mode.startsWith("classic")) {
+            String wpFile = "00_doctor_doom.jpg";
+            if ("classic_cricket".equals(mode)) wpFile = "02_canva_cricket_arena.jpg";
+            else if ("classic_f1".equals(mode)) wpFile = "03_canva_f1_paddock.jpg";
+            else if ("classic_music".equals(mode)) wpFile = "04_canva_music_youtube.jpg";
+
+            sp.edit().putString(Config.WALLPAPER_CHOICE_KEY, wpFile).apply();
+            if (wallpaperPlayer != null) {
+                wallpaperPlayer.setCustomWallpaperFile(this, wpFile);
+            }
             if (reelHomeView != null) {
                 reelHomeView.setVisibility(View.GONE);
                 reelHomeView.setFocusable(false);
@@ -1015,13 +1033,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             updateClockVisibility();
             updateInputsButton();
             grid.post(() -> focusTile(0));
-            Toast.makeText(this, "Switched to Original Install Theme (Click 'Marvel / Theme' top right to return)", Toast.LENGTH_LONG).show();
         } else {
             String wpFile = "00_doctor_doom.jpg";
             if ("cricket".equals(mode)) wpFile = "02_canva_cricket_arena.jpg";
             else if ("f1".equals(mode)) wpFile = "03_canva_f1_paddock.jpg";
             else if ("music".equals(mode)) wpFile = "04_canva_music_youtube.jpg";
 
+            sp.edit().putString(Config.WALLPAPER_CHOICE_KEY, wpFile).apply();
             grid.setVisibility(View.INVISIBLE);
             grid.setFocusable(false);
             grid.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
@@ -1143,6 +1161,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     protected void onResume() {
         super.onResume();
         resumed = true;
+        ServiceRepair.restore(this);
         // A festival that started or ended while Home was in the background: rebuild with or without it.
         if (festive != festival.active(LocalDate.now())) {
             recreate();

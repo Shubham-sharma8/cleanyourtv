@@ -22,6 +22,12 @@
             android:textSize="34sp" />
 
         <TextView
+            android:id="@+id/themeModeChoice"
+            style="@style/SettingsRow"
+            android:layout_marginTop="28dp"
+            android:text="Theme: Main Default Theme" />
+
+        <TextView
             android:id="@+id/reorderChoice"
             style="@style/SettingsRow"
             android:layout_marginTop="28dp"

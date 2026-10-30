@@ -91,11 +91,53 @@ final class WallpaperPlayer {
         names = config.wallpaperCaptions && config.wallpaperEnabled && !files.isEmpty()
                 ? WallpaperCaptions.read(files.get(0).getParentFile()) : Collections.emptyMap();
         caption = names.isEmpty() ? null : makeCaption(context, root);
+        String wpChoice = context.getSharedPreferences(Config.SETTINGS_NAME, Context.MODE_PRIVATE)
+                .getString(Config.WALLPAPER_CHOICE_KEY, null);
         if (config.wallpaperEnabled && !files.isEmpty()) {
             root.addView(image, 0, new FrameLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
             showFirst();
+        } else if (config.wallpaperEnabled && !"none".equals(wpChoice)) {
+            root.addView(image, 0, new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            showBuiltInFallback(context);
         }
+    }
+
+    private void showBuiltInFallback(Context context) {
+        try (java.io.InputStream is = context.getAssets().open("reel/doom_wallpaper.jpg")) {
+            BitmapFactory.Options opts = new BitmapFactory.Options();
+            opts.inPreferredConfig = bitmapConfig;
+            opts.inMutable = dimColor != 0;
+            Bitmap decoded = BitmapFactory.decodeStream(is, null, opts);
+            if (decoded != null) {
+                if (dimColor != 0) new Canvas(decoded).drawColor(dimColor);
+                show(decoded);
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
+    void setCustomWallpaperFile(Context context, String fileName) {
+        if (image.getParent() == null) {
+            root.addView(image, 0, new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        }
+        File dir = Config.dir(context);
+        File candidate = dir != null ? new File(new File(dir, "wallpapers"), fileName) : null;
+        if (candidate == null || !candidate.isFile()) {
+            candidate = new File("/data/local/tmp/wallpapers", fileName);
+        }
+        if (candidate.isFile()) {
+            Bitmap bmp = decode(candidate);
+            if (bmp != null) {
+                show(bmp);
+                displayed = candidate.getName();
+                showCaption(false);
+                return;
+            }
+        }
+        showBuiltInFallback(context);
     }
 
     /**

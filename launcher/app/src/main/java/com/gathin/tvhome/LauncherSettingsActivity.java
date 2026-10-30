@@ -32,6 +32,7 @@ public final class LauncherSettingsActivity extends Activity {
     private final TextView[] rowChoices = new TextView[4];
     private static final int[] DOCK_OPACITIES = {100, 70, 50, 30};
     private final TextView[] dockChoices = new TextView[DOCK_OPACITIES.length];
+    private TextView themeModeChoice;
     private TextView wallpaperChoice;
     private TextView animationsChoice;
     private TextView advancedChoice;
@@ -106,6 +107,10 @@ public final class LauncherSettingsActivity extends Activity {
             reverseRow(rowChoices);
             reverseRow(dockChoices);
         }
+        themeModeChoice = findViewById(R.id.themeModeChoice);
+        if (themeModeChoice != null) {
+            themeModeChoice.setOnClickListener(v -> showThemeModePicker());
+        }
         wallpaperChoice = findViewById(R.id.wallpaperChoice);
         wallpaperChoice.setOnClickListener(v -> showWallpaperPicker());
         animationsChoice = findViewById(R.id.animationsChoice);
@@ -167,10 +172,54 @@ public final class LauncherSettingsActivity extends Activity {
         for (int i = views.length - 1; i >= 0; i--) row.addView(views[i]);
     }
 
+    private static final String[][] THEME_MODES = {
+        {"classic", "Main Default Theme (Classic Grid + Doctor Doom 4K)"},
+        {"marvel", "Marvel: Avengers Doomsday 4K (Interactive Reel + Chess)"},
+        {"cricket", "Canva Cricket Arena 4K (Interactive Reel)"},
+        {"f1", "Canva F1 Paddock Club 4K (Interactive Reel)"},
+        {"music", "Canva Music & YouTube Neon 4K (Interactive Reel)"},
+        {"classic_cricket", "Main Default Grid + Canva Cricket Arena 4K"},
+        {"classic_f1", "Main Default Grid + Canva F1 Paddock Club 4K"},
+        {"classic_music", "Main Default Grid + Canva Music & YouTube 4K"}
+    };
+
+    private void showThemeModePicker() {
+        String current = choices.getString("active_theme_mode", "classic");
+        String[] labels = new String[THEME_MODES.length];
+        int checked = 0;
+        for (int i = 0; i < THEME_MODES.length; i++) {
+            labels[i] = THEME_MODES[i][1];
+            if (THEME_MODES[i][0].equals(current)) checked = i;
+        }
+        new AlertDialog.Builder(this)
+                .setTitle("Launcher Theme")
+                .setSingleChoiceItems(labels, checked, (dialog, which) -> {
+                    dialog.dismiss();
+                    String chosen = THEME_MODES[which][0];
+                    choices.edit().putString("active_theme_mode", chosen).apply();
+                    changed();
+                    Toast.makeText(this, "Theme applied: " + THEME_MODES[which][1], Toast.LENGTH_SHORT).show();
+                    refresh();
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    private String currentThemeLabel() {
+        String current = choices.getString("active_theme_mode", "classic");
+        for (String[] row : THEME_MODES) {
+            if (row[0].equals(current)) return row[1];
+        }
+        return THEME_MODES[0][1];
+    }
+
     private void showWallpaperPicker() {
         File dir = Config.dir(this);
         List<File> images = new java.util.ArrayList<>(WallpaperRotation.images(
                 dir == null ? null : new File(dir, "wallpapers")));
+        if (images.isEmpty()) {
+            images.addAll(WallpaperRotation.images(new File("/data/local/tmp/wallpapers")));
+        }
         // A theme with a single wallpaper.jpg offers that picture too (Config maps the choice back to it).
         File single = dir == null ? null : new File(dir, Config.WALLPAPER_NAME);
         if (single != null && single.isFile()) images.add(0, single);
@@ -292,6 +341,9 @@ public final class LauncherSettingsActivity extends Activity {
                 getString(advancedEffects ? R.string.on : R.string.off)));
         advancedChoice.setEnabled(animations);
         advancedChoice.setAlpha(animations ? 1f : 0.5f);
+        if (themeModeChoice != null) {
+            themeModeChoice.setText("Theme: " + currentThemeLabel());
+        }
         String wallpaperCurrent = choices.getString(Config.WALLPAPER_CHOICE_KEY, null);
         wallpaperChoice.setText(getString(R.string.wallpaper_state,
                 "none".equals(wallpaperCurrent) ? getString(R.string.wallpaper_none)

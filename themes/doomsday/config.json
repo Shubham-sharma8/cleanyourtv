@@ -18,7 +18,7 @@
   "tile_menu": true,
   "reorder_button": true,
   "launcher_settings_button": true,
-  "icon_only_buttons": true,
+  "icon_only_buttons": false,
   "dock_glass": true,
   "dock_band": false,
   "app_glow": true,
@@ -28,13 +28,17 @@
   "wallpaper_dim": 20,
   "dock_opacity": 70,
   "wallpaper_captions": true,
+  "stock_home_redirect": "com.amazon.tv.launcher",
+  "power_on_home_always": true,
+  "home_long_press_home": true,
   "app_keys": [
     "191:com.amazon.firetv.youtube",
     "hold:191:com.amazon.firebat",
     "190:com.netflix.ninja",
     "hold:190:com.playfy.tv",
+    "284:home",
     "hold:284:in.startv.hotstar",
-    "192:com.sonyliv",
+    "192:com.onemainstream.sonyliv.android",
     "hold:192:ar.tvplayer.tv"
   ]
 }
