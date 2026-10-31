@@ -959,7 +959,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         reelHomeView.syncDockApps(adapter);
         String savedThemeMode = getSharedPreferences(Config.SETTINGS_NAME, MODE_PRIVATE)
-                .getString("active_theme_mode", "classic");
+                .getString("theme_mode_v2", "classic");
         applyActiveThemeMode(savedThemeMode);
 
         // Not after recreate(): the launch intent survives it and would open the settings again.
@@ -1007,7 +1007,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private void applyActiveThemeMode(String mode) {
         if (mode == null || mode.isEmpty()) mode = "classic";
         SharedPreferences sp = getSharedPreferences(Config.SETTINGS_NAME, MODE_PRIVATE);
-        sp.edit().putString("active_theme_mode", mode).apply();
+        sp.edit().putString("theme_mode_v2", mode).putString("active_theme_mode", mode).apply();
 
         View topButtons = findViewById(R.id.topButtons);
         if (mode.startsWith("classic")) {

@@ -184,7 +184,7 @@ public final class LauncherSettingsActivity extends Activity {
     };
 
     private void showThemeModePicker() {
-        String current = choices.getString("active_theme_mode", "classic");
+        String current = choices.getString("theme_mode_v2", choices.getString("active_theme_mode", "classic"));
         String[] labels = new String[THEME_MODES.length];
         int checked = 0;
         for (int i = 0; i < THEME_MODES.length; i++) {
@@ -196,7 +196,7 @@ public final class LauncherSettingsActivity extends Activity {
                 .setSingleChoiceItems(labels, checked, (dialog, which) -> {
                     dialog.dismiss();
                     String chosen = THEME_MODES[which][0];
-                    choices.edit().putString("active_theme_mode", chosen).apply();
+                    choices.edit().putString("theme_mode_v2", chosen).putString("active_theme_mode", chosen).apply();
                     changed();
                     Toast.makeText(this, "Theme applied: " + THEME_MODES[which][1], Toast.LENGTH_SHORT).show();
                     refresh();
@@ -206,7 +206,7 @@ public final class LauncherSettingsActivity extends Activity {
     }
 
     private String currentThemeLabel() {
-        String current = choices.getString("active_theme_mode", "classic");
+        String current = choices.getString("theme_mode_v2", choices.getString("active_theme_mode", "classic"));
         for (String[] row : THEME_MODES) {
             if (row[0].equals(current)) return row[1];
         }
